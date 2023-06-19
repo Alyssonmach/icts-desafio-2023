@@ -159,20 +159,20 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-/dados-redimensionados/
+/dados-redimensionados/*
 !dados-redimensionados/README.md
 
-/dataset-original/
+/dataset-original/*
 !dataset-original/README.md
 
-/jsons-corrigidos/
+/jsons-corrigidos/*
 !jsons-corrigidos/README.md
 
-/jsons-estratificados/
+/jsons-estratificados/*
 !jsons-estratificados/README.md
 
-/modelo-treinado/
+/modelo-treinado/*
 !modelo-treinado/README.md
 
-/runs/
+/runs/*
 !runs/README.md

@@ -1,0 +1,1 @@
+Essa pasta é o local onde é armazenado as métricas avaliativas e os resultados de predições feitos, após a etapa de treinamento e inferência com o modelo, respectivamente.

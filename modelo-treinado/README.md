@@ -1,0 +1,1 @@
+O modelo treinado foi adicionado a pasta ```modelo-treinado/```.

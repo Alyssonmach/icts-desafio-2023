@@ -1,7 +1,7 @@
-Para evitar que problemas fossem obtidos durante a etapa de treinamento, imagens que contêm regiões sem rótulo definido foram removidas. Foi utilizado o script localizado em ```scripts/remove_void.py``` para resolver esse problema, através do seguinte código de comando:
+Para remover polígonos marcados como ```void```, execute a partir da raiz do repositório:
 
 ```
-python remove_void.py -t dados-redimensionados/
+python scripts/remove_void.py -t dados-redimensionados/ -o jsons-corrigidos/
 ```
 
-A nova pasta com os arquivos ```.json``` corrigidos foi renomeada para ```jsons-corrigidos/```.
+O script grava os JSONs corrigidos no diretório de saída. Os demais rótulos preservam a grafia original.

@@ -1,7 +1,7 @@
-Utilizando a sugestão de divisão dos dados, armazenados em arquivos ```.txt``` em estratos de treinamento, validação e teste, em uma aproximação respectiva de 70%, 10% e 20%, respectivamente, localizada na pasta ```guia-estratificacao-arquivos/```, o script ```scripts/split_jsons.py``` foi utilizado para resolver esse problema. O seguinte código de comando foi utilizado:
+O script ```scripts/split_jsons.py``` usa a divisão fixa da pasta ```guia-estratificacao-arquivos/``` (70% treino, 10% validação e 20% teste). Execute a partir da raiz do repositório:
 
 ```
-python split_jsons.py -t jsons-corrigidos/
+python scripts/split_jsons.py -t jsons-corrigidos/ --output-dir jsons-estratificados/
 ```
 
-A nova pasta com os arquivos ```.json``` estratificados foi renomeada para ```jsons-estratificados/```.
+O resultado contém as subpastas ```train_jsons/```, ```val_jsons/``` e ```test_jsons/```. Arquivos esperados que não existam na entrada são informados no terminal.

@@ -176,3 +176,9 @@ cython_debug/
 
 /runs/*
 !runs/README.md
+
+# Generated preprocessing artifacts
+/sized_data/
+/newjsons/
+/splitting_jsons/
+/coco/

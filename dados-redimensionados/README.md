@@ -1,11 +1,9 @@
 O dataset original foi obtido através do Google Drive, disponibilizado pelos criadores no GitHub, na qual o mesmo pode ser obtidos [clicando aqui](https://drive.google.com/uc?export=download&confirm=no_antivirus&id=1Yz59yXCiPKS0_X4K3x9mW22NLnxjvrr0). Esse dataset foi adicionada a pasta ```dataset-original```. 
 
-Em seguida, o script localizado em ```scripts/resize_image_and_annotation.py``` foi modificado para que fosse possível redimensionar as imagens do dataset para um tamanho de 640x360.   
-
-A partir do script ```scripts/resize_image_and_annotation.py```, foi utilizado o seguinte código na linha de comando para que uma nova pasta fosse gerada com os códigos redimensionados:
+Em seguida, o script ```scripts/resize_image_and_annotation_final.py``` redimensiona as imagens e ajusta seus polígonos para 640x360. Execute-o a partir da raiz do repositório:
 
 ```
-python resize_image_and_annotation-final.py -t dataset-original/
+python scripts/resize_image_and_annotation_final.py -t dataset-original/ -o dados-redimensionados/
 ```
 
-A nova pasta com as imagens redimensionadas foi renomeada para ```dados-redimensionados/```.
+O script grava cada imagem JPG junto de seu JSON correspondente e define ```imageData``` como nulo para evitar manter os bytes da imagem original.

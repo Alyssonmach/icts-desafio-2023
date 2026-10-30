@@ -36,6 +36,18 @@ O dataset TTPLA contém imagens aéreas de torres e linhas de transmissão. Cada
 As etapas de preparação dos dados e treinamento do modelo estão disponívels no arquivo Jupyter Notebook:
 * [desafio-icts-ttpla-dataset.ipynb](desafio-icts-ttpla-dataset.ipynb).
 
+Os scripts de preparação podem ser executados a partir da raiz do repositório. O redimensionamento requer OpenCV:
+
+```bash
+python -m pip install opencv-python
+python scripts/resize_image_and_annotation_final.py -t dataset-original/ -o dados-redimensionados/
+python scripts/remove_void.py -t dados-redimensionados/ -o jsons-corrigidos/
+python scripts/split_jsons.py -t jsons-corrigidos/ --output-dir jsons-estratificados/
+python scripts/labelme2coco_2.py jsons-estratificados/train_jsons --output coco/treino.json
+```
+
+Repita o último comando para `val_jsons` e `test_jsons`, mudando a pasta de entrada e o nome do arquivo de saída. Os diretórios gerados são ignorados pelo Git.
+
 ## Predição do Modelo Feita em Vídeos
 ***
 

@@ -1,54 +1,112 @@
-import cv2
-import sys, json
+"""Resize LabelMe images and scale polygon annotations to 640x360 by default."""
+
+from __future__ import annotations
+
 import argparse
-from xml.dom import minidom
-import numpy as np
-import os
+import json
+from pathlib import Path
+from typing import Any
 
-output_folder = '.'
-sized_folder = output_folder+'/'+'sized_data'
-dim=(640,360)
+import cv2
 
-for p in [output_folder,sized_folder]:
-	if not os.path.exists(p):
-		os.makedirs(p)
 
-ap = argparse.ArgumentParser()
-ap.add_argument('-t', '--path_imgs_annotation', required=True, help = 'path to imgs with annotations')
-args = ap.parse_args()
+def resize_dataset(
+    input_dir: Path, output_dir: Path, width: int = 640, height: int = 360
+) -> int:
+    """Resize annotated JPG files and return the number of images resized."""
+    if width <= 0 or height <= 0:
+        raise ValueError("A largura e a altura devem ser maiores que zero.")
+    if not input_dir.is_dir():
+        raise NotADirectoryError(f"Diretório de entrada não encontrado: {input_dir}")
 
-images_names = [img for img in os.listdir(args.path_imgs_annotation) if img.endswith(".jpg")]
+    output_dir.mkdir(parents=True, exist_ok=True)
+    resized_count = 0
 
-nresize = 0
-for imgname in images_names:
-	imgpath = args.path_imgs_annotation+'/'+imgname
-	annotation_path = args.path_imgs_annotation+'/'+imgname.replace('.jpg','.json')
-	if not os.path.isfile(annotation_path):
-		continue
-	jsndata = json.load(open(annotation_path,'r'))
-	output_labled_path = sized_folder+'/'+imgname
-	img = cv2.imread(imgpath)
-	h,w = img.shape[0],img.shape[1]
-	
-	#img = cv2.resize(img, (dim[1],dim[0]), interpolation = cv2.INTER_AREA)
-	if w != dim[0] or h!= dim[1]:
-		print(annotation_path,w,h,' Resizing')
-		nresize+=1
-		img = cv2.resize(img, dim, interpolation = cv2.INTER_AREA)
-		for indx, p in enumerate(jsndata['shapes']):
-			points = [[i[0]/w, i[1]/h] for i in p['points']]
-			points = [[i[0]*dim[0], i[1]*dim[1]] for i in points]
-			jsndata['shapes'][indx]['points'] = points
-			points = np.int32([points])
-	else:
-		print(annotation_path,w,h,' Skip')
-	cv2.imwrite(output_labled_path,img)
-	jsndata['imageWidth'] = dim[0]
-	jsndata['imageHeight'] = dim[1]
-	if jsndata['imagePath'] != imgname:
-		print('Error image name = '+imgname +' while json has '+jsndata['imagePath'] )
-		print(annotation_path)
-		exit()
-	json.dump(jsndata,open(output_labled_path.replace('.jpg','.json'),'w'))
-	# exit()
-print('Total number of resized images = ',nresize)
+    for image_path in sorted(input_dir.glob("*.jpg")):
+        annotation_path = image_path.with_suffix(".json")
+        if not annotation_path.is_file():
+            print(f"Ignorando imagem sem anotação: {image_path.name}")
+            continue
+
+        image = cv2.imread(str(image_path))
+        if image is None:
+            raise ValueError(f"Não foi possível ler a imagem: {image_path}")
+
+        with annotation_path.open(encoding="utf-8") as file:
+            annotation: dict[str, Any] = json.load(file)
+        if not isinstance(annotation, dict):
+            raise ValueError(f"Anotação deve ser um objeto JSON em {annotation_path}")
+        shapes = annotation.get("shapes")
+        if not isinstance(shapes, list):
+            raise ValueError(f"Campo 'shapes' ausente ou inválido em {annotation_path}")
+
+        original_height, original_width = image.shape[:2]
+        if original_width == 0 or original_height == 0:
+            raise ValueError(f"Imagem com dimensões inválidas: {image_path}")
+
+        scale_x = width / original_width
+        scale_y = height / original_height
+        for shape in shapes:
+            if not isinstance(shape, dict):
+                raise ValueError(f"Forma inválida em {annotation_path}: {shape!r}")
+            points = shape.get("points")
+            if not isinstance(points, list) or any(
+                not isinstance(point, (list, tuple)) or len(point) != 2
+                for point in points
+            ):
+                raise ValueError(
+                    f"Anotação sem lista de pontos em {annotation_path}: {shape!r}"
+                )
+            shape["points"] = [
+                [float(x) * scale_x, float(y) * scale_y] for x, y in points
+            ]
+
+        if (original_width, original_height) != (width, height):
+            image = cv2.resize(image, (width, height), interpolation=cv2.INTER_AREA)
+            resized_count += 1
+
+        # Embedded imageData refers to the original image and would become stale.
+        annotation["imageData"] = None
+        annotation["imagePath"] = image_path.name
+        annotation["imageWidth"] = width
+        annotation["imageHeight"] = height
+
+        output_image_path = output_dir / image_path.name
+        if not cv2.imwrite(str(output_image_path), image):
+            raise OSError(f"Não foi possível salvar a imagem: {output_image_path}")
+        with (output_dir / annotation_path.name).open("w", encoding="utf-8") as file:
+            json.dump(annotation, file, ensure_ascii=False, indent=2)
+
+    return resized_count
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Redimensiona imagens e polígonos de anotações LabelMe."
+    )
+    parser.add_argument(
+        "-t",
+        "--path_imgs_annotation",
+        required=True,
+        type=Path,
+        help="Diretório com imagens JPG e seus arquivos JSON do LabelMe.",
+    )
+    parser.add_argument(
+        "-o",
+        "--output-dir",
+        type=Path,
+        default=Path("sized_data"),
+        help="Diretório de saída (padrão: ./sized_data).",
+    )
+    parser.add_argument("--width", type=int, default=640, help="Largura de saída.")
+    parser.add_argument("--height", type=int, default=360, help="Altura de saída.")
+    args = parser.parse_args()
+
+    count = resize_dataset(
+        args.path_imgs_annotation, args.output_dir, args.width, args.height
+    )
+    print(f"Imagens redimensionadas: {count}")
+
+
+if __name__ == "__main__":
+    main()
